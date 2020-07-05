@@ -35,6 +35,14 @@ push!(a0b.resProb, [1, S0])
 push!(a0c.resProb, [1, S1])
 push!(a0d.resProb, [1, S2])
 
+singleStateCount = 0;
+
+#==================================================================
+0 < discount < 1
+0 < probability < 1 {all probabilities of an action adding up to 1}
+0 < reward < 100
+===================================================================#
+
 println("What is the discount value for the MDP? ")
 discount = parse(Float64, readline(stdin))
 
@@ -80,13 +88,19 @@ S2.actions = [a0d, a1d, a2d]
 #create array of states
 states = [S0, S1, S2, S3, S4, S5]
 
-function V(s)
+#==================================================================
+The MDP is process of choosing the best policy, or best path to a
+goal state. This is accomplished using value iteration here using
+the bellman equation to find the values.
+===================================================================#
+
+function V!(s)
     if length(s.actions) == 0
         return s.reward
     end
     max = 0
     for action in s.actions
-        m = Q(action)
+        m = Q(s, action)
         if m > max
             max = m
             maxAct = action
@@ -95,9 +109,17 @@ function V(s)
     return [max, maxAct]
 end
 
-function Q(a)
+function Q!(st, a)
     QUtil = 0
     for s in a.resProb
+        if s == st
+            singleStateCount++
+            if singleStateCount == 5
+                singleStateCount = 0
+                QUtil += s[1] * (s[2].reward + (discount * s[2].reward * s[1]))
+                continue
+            end
+        end
         QUtil += s[1] * (s[2].reward + (discount * V(s[2])[1]))
     end
     return QUtil
@@ -108,9 +130,3 @@ for i in 1:3
 end
 
 println("The optimal policy is:\n", join(policy, "\n"))
-
-
-
-
-
-
